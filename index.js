@@ -1,6 +1,7 @@
 const express = require('express')
 const cors = require("cors");
 const fileUpload = require('express-fileupload');
+const ObjectID = require("mongodb").ObjectID;
 
 const bodyParser = require("body-parser");
 require('dotenv').config()
@@ -28,6 +29,7 @@ client.connect(err => {
     const adminCollection = client.db("massageTherapyCenter").collection("admin");
     const serviceCollection = client.db("massageTherapyCenter").collection("services");
     const reviewCollection = client.db("massageTherapyCenter").collection("reviews");
+    const bookingCollection = client.db("massageTherapyCenter").collection("booking");
 
 
     //add admin in database by post method
@@ -48,61 +50,105 @@ client.connect(err => {
         const serviceCharge = req.body.serviceCharge;
         const newImg = file.data
         const encImg = newImg.toString('base64')
-    
+
         const image = {
-          contentType: file.mimetype,
-          size: file.size,
-          img: Buffer.from(encImg, 'base64')
+            contentType: file.mimetype,
+            size: file.size,
+            img: Buffer.from(encImg, 'base64')
         };
-        
-        serviceCollection.insertOne({ serviceName,serviceDescription,serviceCharge, image })
-          .then(result => {
-            res.send(result.insertedCount > 0)
-          })
-    
-      })
+
+        serviceCollection.insertOne({ serviceName, serviceDescription, serviceCharge, image })
+            .then(result => {
+                res.send(result.insertedCount > 0)
+            })
+
+    })
 
 
-      //get all service from database to show in ui by get request
-      app.get("/services", (req, res) => {
+    //get all service from database to show in ui by get request
+    app.get("/services", (req, res) => {
         serviceCollection.find({})
-        .toArray((error, documents) => {
-            res.send(documents)
-          
-        })
-      })
+            .toArray((error, documents) => {
+                res.send(documents)
+
+            })
+    })
 
 
-      //chek loged in user is a admin or customer 
-      app.post('/isAdmin', (req, res) => {
-          const email = req.body.email
-          adminCollection.find({email :email })
-          .toArray((error, documents) => {
-              res.send(documents.length > 0)
-              console.log(documents)
-          })
-        
-      })
+    //chek loged in user is a admin or customer 
+    app.post('/isAdmin', (req, res) => {
+        const email = req.body.email
+        adminCollection.find({ email: email })
+            .toArray((error, documents) => {
+                res.send(documents.length > 0)
+            })
+
+    })
 
 
-      //send review data in database by post request
-      app.post('/addReview',(req,res) => {
-           const reviewData = req.body
-           console.log(reviewData)
-           reviewCollection.insertOne(reviewData)
-           .then(result => {
-               res.send(result.insertedCount > 0)
-           })
-      })
+    //send review data in database by post request
+    app.post('/addReview', (req, res) => {
+        const reviewData = req.body
+        reviewCollection.insertOne(reviewData)
+            .then(result => {
+                res.send(result.insertedCount > 0)
+            })
+    })
 
 
-      //get review data from database by get request
-      app.get('/reviews', (req,res) => {
+    //get review data from database by get request
+    app.get('/reviews', (req, res) => {
         reviewCollection.find({})
-        .toArray((error,documents) => {
-            res.send(documents)
-        }) 
-      })
+            .toArray((error, documents) => {
+                res.send(documents)
+            })
+    })
+
+    //delet service form database by delet request
+    app.delete('/deletService/:id', (req, res) => {
+        const id = ObjectID(req.params.id)
+
+        serviceCollection.findOneAndDelete({ _id: id }).then((data) => {
+            res.send({ success: !!data.value });
+        });
+
+    })
+
+    //get specific  data from database
+    app.get("/service/:id", (req, res) => {
+        const id = ObjectID(req.params.id);
+
+        serviceCollection.find({ _id: id }).toArray((err, documents) => {
+            res.send(documents[0]);
+        });
+
+
+    });
+
+
+    //booking a service 
+    app.post('/bookingAservice', (req, res) => {
+        const bookingDetails = req.body
+        bookingCollection.insertOne(bookingDetails)
+            .then(result => {
+                res.send(result.insertedCount > 0)
+            })
+    })
+
+    // get booking data from database by get post request
+    app.post('/customarBookingsList', (req, res) => {
+        const email = req.body.email
+
+        bookingCollection.find({ email: email })
+            .toArray((err, bookings) => {
+                res.send(bookings)
+            })
+    })
+
+
+
+
+
 
 
 
@@ -111,7 +157,7 @@ client.connect(err => {
 
 
 
-app.listen(process.env.PORT ||port, () => {
+app.listen(process.env.PORT || port, () => {
     console.log(`Example app listening at http://localhost:${port}`)
 })
 
