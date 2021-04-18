@@ -15,7 +15,7 @@ const port = 8000
 
 
 app.get('/', (req, res) => {
-    res.send('Hello Word')
+    res.send('Welcome Massage Therapy Center Server')
 })
 
 //Database connection
