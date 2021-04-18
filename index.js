@@ -13,6 +13,7 @@ app.use(fileUpload())
 
 const port = 8000
 
+
 app.get('/', (req, res) => {
     res.send('Hello Word')
 })
@@ -23,7 +24,7 @@ const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASSWORD}@clu
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
 client.connect(err => {
 
-    //admin collection
+    //database collection
     const adminCollection = client.db("massageTherapyCenter").collection("admin");
     const serviceCollection = client.db("massageTherapyCenter").collection("services");
     const reviewCollection = client.db("massageTherapyCenter").collection("reviews");
@@ -59,19 +60,15 @@ client.connect(err => {
             .then(result => {
                 res.send(result.insertedCount > 0)
             })
-
     })
-
 
     //get all service from database to show in ui by get request
     app.get("/services", (req, res) => {
         serviceCollection.find({}).sort({ $natural: -1 }).limit(3)
             .toArray((error, documents) => {
                 res.send(documents)
-
             })
     })
-
 
     //chek loged in user is a admin or customer 
     app.post('/isAdmin', (req, res) => {
@@ -80,9 +77,7 @@ client.connect(err => {
             .toArray((error, documents) => {
                 res.send(documents.length > 0)
             })
-
     })
-
 
     //send review data in database by post request
     app.post('/addReview', (req, res) => {
@@ -92,7 +87,6 @@ client.connect(err => {
                 res.send(result.insertedCount > 0)
             })
     })
-
 
     //get review data from database by get request
     app.get('/reviews', (req, res) => {
@@ -108,7 +102,6 @@ client.connect(err => {
         serviceCollection.findOneAndDelete({ _id: id }).then((data) => {
             res.send({ success: !!data.value });
         });
-
     })
 
     //get specific  data from database
@@ -118,7 +111,6 @@ client.connect(err => {
             res.send(documents[0]);
         });
     });
-
 
     //booking a service 
     app.post('/bookingAservice', (req, res) => {
@@ -138,7 +130,6 @@ client.connect(err => {
             })
     })
 
-
     // get all booking data from database by get post request
     app.get('/adminBookingsList', (req, res) => {
         bookingCollection.find({})
@@ -147,9 +138,7 @@ client.connect(err => {
             })
     })
 
-
     //update status by patch request
-
     app.patch('/updateBookingStatus', (req, res) => {
         bookingCollection.updateOne({ _id: ObjectID(req.body.id) }, {
             $set: { bookingStatus: req.body.updateStatus }
@@ -158,8 +147,6 @@ client.connect(err => {
                 res.send(result.modifiedCount > 0)
             })
     })
-
-
 
 });
 
