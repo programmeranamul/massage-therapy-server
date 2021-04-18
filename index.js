@@ -2,7 +2,6 @@ const express = require('express')
 const cors = require("cors");
 const fileUpload = require('express-fileupload');
 const ObjectID = require("mongodb").ObjectID;
-
 const bodyParser = require("body-parser");
 require('dotenv').config()
 
@@ -15,16 +14,15 @@ app.use(fileUpload())
 const port = 8000
 
 app.get('/', (req, res) => {
-    res.send('second commit success')
+    res.send('Hello Word')
 })
 
-
 //Database connection
-
 const MongoClient = require('mongodb').MongoClient;
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASSWORD}@cluster0.5yvtj.mongodb.net/${process.env.DB_NAME}?retryWrites=true&w=majority`;
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
 client.connect(err => {
+
     //admin collection
     const adminCollection = client.db("massageTherapyCenter").collection("admin");
     const serviceCollection = client.db("massageTherapyCenter").collection("services");
@@ -98,7 +96,7 @@ client.connect(err => {
 
     //get review data from database by get request
     app.get('/reviews', (req, res) => {
-        reviewCollection.find({})
+        reviewCollection.find({}).sort({ $natural: -1 }).limit(3)
             .toArray((error, documents) => {
                 res.send(documents)
             })
@@ -107,7 +105,6 @@ client.connect(err => {
     //delet service form database by delet request
     app.delete('/deletService/:id', (req, res) => {
         const id = ObjectID(req.params.id)
-
         serviceCollection.findOneAndDelete({ _id: id }).then((data) => {
             res.send({ success: !!data.value });
         });
@@ -117,12 +114,9 @@ client.connect(err => {
     //get specific  data from database
     app.get("/service/:id", (req, res) => {
         const id = ObjectID(req.params.id);
-
         serviceCollection.find({ _id: id }).toArray((err, documents) => {
             res.send(documents[0]);
         });
-
-
     });
 
 
@@ -138,7 +132,6 @@ client.connect(err => {
     // get booking data from database by get post request
     app.post('/customarBookingsList', (req, res) => {
         const email = req.body.email
-
         bookingCollection.find({ email: email })
             .toArray((err, bookings) => {
                 res.send(bookings)
@@ -146,15 +139,29 @@ client.connect(err => {
     })
 
 
+    // get all booking data from database by get post request
+    app.get('/adminBookingsList', (req, res) => {
+        bookingCollection.find({})
+            .toArray((err, bookings) => {
+                res.send(bookings)
+            })
+    })
 
 
+    //update status by patch request
 
+    app.patch('/updateBookingStatus', (req, res) => {
+        bookingCollection.updateOne({ _id: ObjectID(req.body.id) }, {
+            $set: { bookingStatus: req.body.updateStatus }
+        })
+            .then(result => {
+                res.send(result.modifiedCount > 0)
+            })
+    })
 
 
 
 });
-
-
 
 
 app.listen(process.env.PORT || port, () => {
