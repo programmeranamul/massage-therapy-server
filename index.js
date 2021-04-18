@@ -65,7 +65,7 @@ client.connect(err => {
 
     //get all service from database to show in ui by get request
     app.get("/services", (req, res) => {
-        serviceCollection.find({})
+        serviceCollection.find({}).sort({ $natural: -1 }).limit(3)
             .toArray((error, documents) => {
                 res.send(documents)
 
